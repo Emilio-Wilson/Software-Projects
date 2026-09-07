@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IT Ticketing System — Emilio Wilson</title>
+<meta name="description" content="IT Helpdesk and Ticketing system for Charleston International Airport.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="nav-inner">
+    <div class="wordmark">
+      <div class="avatar-wrap" tabindex="0">
+        <img src="images/emiliowilson.png" alt="Emilio Wilson" class="avatar">
+        <div class="bio-card">
+          <img src="images/emiliowilson.png" alt="Emilio Wilson" class="bio-photo">
+          <div class="bio-name">Emilio Wilson</div>
+          <div class="bio-role">Engineer</div>
+          <p class="bio-text">Emilio Wilson, a native of Charleston, South Carolina, is an Engineer and IT professional with a passion for technology, innovation, and problem solving. He earned his Bachelor of Science in Engineering with a concentration in Innovation Design from Coastal Carolina University in 2023. During college, Emilio gained valuable experience as a football team member and intern with the Charleston International Airport Aviation Authority, where he transitioned into the IT Department. After graduating, he joined the Aviation Authority as an IT Technician and, within five months, was promoted to IT Application Support Analyst. In this role, Emilio develops and supports software applications while applying his engineering and technical expertise to create innovative solutions. He continues to grow in the fields of engineering, technology, and software development while using his skills to solve real world challenges.</p>
+        </div>
+      </div>
+      <span class="name-block">Emilio Wilson <span class="role">| Engineer</span></span>
+    </div>
+    <div class="nav-right">
+      <div class="weather" id="weatherWidget">
+        <span class="weather-icon" id="weatherIcon" aria-hidden="true"></span>
+        <span class="weather-temp" id="weatherTemp"></span>
+      </div>
+      <div class="nav-clock" id="navClock">—</div>
+    </div>
+  </div>
+</header>
+
+<div class="back-link"><a href="index.html">← Back to Project Hub</a></div>
+
+<section class="project-hero">
+  <div class="hero-index">03 — Staff support</div>
+  <div class="hero-frame">
+    <img src="images/ticketing.png" alt="IT Helpdesk ticketing portal">
+  </div>
+  <h1>IT Ticketing System</h1>
+  <div class="hero-tools">
+    <span>JavaScript</span><span>HTML</span><span>CSS</span><span>SQL Databases</span><span>APIs</span><span>Azure</span>
+  </div>
+</section>
+
+<div class="accordion">
+
+  <details class="acc-item" open>
+    <summary>Project Overview <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>This is the IT Helpdesk and Ticketing system used by Charleston International Airport personnel to report and track technology issues. Staff are guided through a quick fix step for common problems before ever filing a ticket, and can submit a ticket that enters a queue the IT team can see, prioritize, and act on.</p>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Project Goal <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>The goal is a single, trackable path for reporting and resolving IT issues, replacing the mix of emails, phone calls, and hallway requests that previously had no shared record.</p>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Tools Used <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>A Microsite that was built by using JavaScript, HTML, and CSS on the Frontend Development. SQL Databases, APIs, and Azure is used for the Backend Development.</p>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Code Reference <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <div class="code-ref">
+        <div class="cr-file"><span>IT-Ticketing-Service.js</span><a href="code/IT-Ticketing-Service.js" download>Download full file</a></div>
+        <pre class="code-full"><span class="tok-comment">// Comments moved to ./NOTES.md  (see &quot;home.js&quot; section).  22 note(s).</span>
+<span class="tok-keyword">import</span> { <span class="tok-plain">$</span>, <span class="tok-plain">$$</span> } <span class="tok-keyword">from</span> <span class="tok-string">&#x27;../core/dom.js&#x27;</span>;
+<span class="tok-keyword">import</span> { <span class="tok-plain">initSubmitForm</span>, <span class="tok-plain">hasUnsavedWork</span>, <span class="tok-plain">requestLeave</span>, <span class="tok-plain">setSubmitOrigin</span> } <span class="tok-keyword">from</span> <span class="tok-string">&#x27;../features/submitForm.js&#x27;</span>;
+<span class="tok-keyword">import</span> { <span class="tok-plain">renderCharts</span> } <span class="tok-keyword">from</span> <span class="tok-string">&#x27;./dashboard.js&#x27;</span>;
+<span class="tok-keyword">import</span> { <span class="tok-plain">renderHistorical</span>, <span class="tok-plain">resetHistoricalView</span> } <span class="tok-keyword">from</span> <span class="tok-string">&#x27;./historical.js&#x27;</span>;
+<span class="tok-keyword">import</span> { <span class="tok-plain">renderITToday</span>, <span class="tok-plain">resetTodayFilter</span> } <span class="tok-keyword">from</span> <span class="tok-string">&#x27;./itToday.js&#x27;</span>;
+<span class="tok-keyword">import</span> { <span class="tok-plain">renderRequesterTable</span>, <span class="tok-plain">resetRequesterView</span> } <span class="tok-keyword">from</span> <span class="tok-string">&#x27;./requester.js&#x27;</span>;
+<span class="tok-keyword">import</span> { <span class="tok-plain">isAdmin</span> } <span class="tok-keyword">from</span> <span class="tok-string">&#x27;../core/auth.js&#x27;</span>;
+
+
+
+
+<span class="tok-keyword">function</span> <span class="tok-plain">clearFilters</span>() {
+    <span class="tok-plain">resetTodayFilter</span>();        
+    <span class="tok-plain">resetHistoricalView</span>();     
+    <span class="tok-plain">resetRequesterView</span>();      
+}
+
+
+<span class="tok-keyword">function</span> <span class="tok-plain">currentView</span>() {
+    <span class="tok-keyword">const</span> <span class="tok-plain">el</span> = <span class="tok-plain">$</span>(<span class="tok-string">&#x27;.view.active&#x27;</span>);
+    <span class="tok-keyword">return</span> <span class="tok-plain">el</span> ? <span class="tok-plain">el</span>.<span class="tok-plain">dataset</span>.<span class="tok-plain">view</span> : <span class="tok-keyword">null</span>;
+}
+
+<span class="tok-keyword">function</span> <span class="tok-plain">navigate</span>(<span class="tok-plain">view</span>) {
+        
+        
+        
+        <span class="tok-keyword">if</span> (<span class="tok-plain">view</span> === <span class="tok-string">&#x27;itmembers&#x27;</span> &amp;&amp; !<span class="tok-plain">isAdmin</span>()) <span class="tok-plain">view</span> = <span class="tok-string">&#x27;home&#x27;</span>;
+
+        <span class="tok-keyword">const</span> <span class="tok-plain">current</span> = <span class="tok-plain">currentView</span>();
+
+        
+        
+        
+        
+        <span class="tok-keyword">if</span> (<span class="tok-plain">current</span> === <span class="tok-string">&#x27;submit&#x27;</span> &amp;&amp; <span class="tok-plain">view</span> !== <span class="tok-string">&#x27;submit&#x27;</span> &amp;&amp; <span class="tok-plain">hasUnsavedWork</span>()) {
+            <span class="tok-plain">requestLeave</span>(<span class="tok-plain">view</span>);
+            <span class="tok-keyword">return</span>;
+        }
+
+        
+        
+        <span class="tok-keyword">if</span> (<span class="tok-plain">view</span> === <span class="tok-string">&#x27;submit&#x27;</span> &amp;&amp; <span class="tok-plain">current</span> &amp;&amp; <span class="tok-plain">current</span> !== <span class="tok-string">&#x27;submit&#x27;</span>) <span class="tok-plain">setSubmitOrigin</span>(<span class="tok-plain">current</span>);
+
+        
+        
+        <span class="tok-plain">clearFilters</span>();
+
+        <span class="tok-plain">$$</span>(<span class="tok-string">&#x27;.view&#x27;</span>).<span class="tok-plain">forEach</span>(<span class="tok-plain">v</span> =&gt; <span class="tok-plain">v</span>.<span class="tok-plain">classList</span>.<span class="tok-plain">toggle</span>(<span class="tok-string">&#x27;active&#x27;</span>, <span class="tok-plain">v</span>.<span class="tok-plain">dataset</span>.<span class="tok-plain">view</span> === <span class="tok-plain">view</span>));
+        <span class="tok-plain">$$</span>(<span class="tok-string">&#x27;.nav-link&#x27;</span>).<span class="tok-plain">forEach</span>(<span class="tok-plain">b</span> =&gt; <span class="tok-plain">b</span>.<span class="tok-plain">classList</span>.<span class="tok-plain">toggle</span>(<span class="tok-string">&#x27;active&#x27;</span>, <span class="tok-plain">b</span>.<span class="tok-plain">dataset</span>.<span class="tok-plain">nav</span> === <span class="tok-plain">view</span>));
+        <span class="tok-plain">window</span>.<span class="tok-plain">scrollTo</span>({ <span class="tok-plain">top</span>: 0, <span class="tok-plain">behavior</span>: <span class="tok-string">&#x27;smooth&#x27;</span> });
+
+        <span class="tok-keyword">if</span> (<span class="tok-plain">view</span> === <span class="tok-string">&#x27;requester&#x27;</span>) <span class="tok-plain">renderRequesterTable</span>();
+        <span class="tok-keyword">if</span> (<span class="tok-plain">view</span> === <span class="tok-string">&#x27;submit&#x27;</span>) <span class="tok-plain">initSubmitForm</span>();
+        <span class="tok-keyword">if</span> (<span class="tok-plain">view</span> === <span class="tok-string">&#x27;itmembers&#x27;</span>) {
+            
+            
+            <span class="tok-plain">switchSubtab</span>(<span class="tok-string">&#x27;today&#x27;</span>);
+        }
+    }
+
+<span class="tok-keyword">function</span> <span class="tok-plain">switchSubtab</span>(<span class="tok-plain">name</span>) {
+        <span class="tok-plain">$$</span>(<span class="tok-string">&#x27;.sub-tab&#x27;</span>).<span class="tok-plain">forEach</span>(<span class="tok-plain">b</span> =&gt; <span class="tok-plain">b</span>.<span class="tok-plain">classList</span>.<span class="tok-plain">toggle</span>(<span class="tok-string">&#x27;active&#x27;</span>, <span class="tok-plain">b</span>.<span class="tok-plain">dataset</span>.<span class="tok-plain">subtab</span> === <span class="tok-plain">name</span>));
+        <span class="tok-plain">$$</span>(<span class="tok-string">&#x27;.subview&#x27;</span>).<span class="tok-plain">forEach</span>(<span class="tok-plain">s</span> =&gt; <span class="tok-plain">s</span>.<span class="tok-plain">classList</span>.<span class="tok-plain">toggle</span>(<span class="tok-string">&#x27;active&#x27;</span>, <span class="tok-plain">s</span>.<span class="tok-plain">dataset</span>.<span class="tok-plain">subview</span> === <span class="tok-plain">name</span>));
+        <span class="tok-keyword">if</span> (<span class="tok-plain">name</span> === <span class="tok-string">&#x27;charts&#x27;</span>) <span class="tok-plain">renderCharts</span>();
+        <span class="tok-keyword">if</span> (<span class="tok-plain">name</span> === <span class="tok-string">&#x27;historical&#x27;</span>) <span class="tok-plain">renderHistorical</span>();
+        <span class="tok-keyword">if</span> (<span class="tok-plain">name</span> === <span class="tok-string">&#x27;today&#x27;</span>) <span class="tok-plain">renderITToday</span>();
+    }
+
+<span class="tok-keyword">function</span> <span class="tok-plain">renderHomeStats</span>() {
+        
+    }
+
+<span class="tok-keyword">export</span> { <span class="tok-plain">navigate</span>, <span class="tok-plain">renderHomeStats</span>, <span class="tok-plain">switchSubtab</span> };</pre>
+      </div>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Success <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>Replaced a mix of emails and hallway requests with one tracked system. Every ticket has a record, an owner, and a status the IT team can report on, instead of scattered, unrecorded requests.</p>
+    </div>
+  </details>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="fs">Software applications engineered, developed, and designed by Emilio Wilson</div>
+    </div>
+    <button type="button" class="btn js-contact-btn">Get in touch</button>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

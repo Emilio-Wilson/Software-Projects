@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Parking Signage — Emilio Wilson</title>
+<meta name="description" content="Digital parking signage automation for Charleston International Airport, built on internal APIs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="nav-inner">
+    <div class="wordmark">
+      <div class="avatar-wrap" tabindex="0">
+        <img src="images/emiliowilson.png" alt="Emilio Wilson" class="avatar">
+        <div class="bio-card">
+          <img src="images/emiliowilson.png" alt="Emilio Wilson" class="bio-photo">
+          <div class="bio-name">Emilio Wilson</div>
+          <div class="bio-role">Engineer</div>
+          <p class="bio-text">Emilio Wilson, a native of Charleston, South Carolina, is an Engineer and IT professional with a passion for technology, innovation, and problem solving. He earned his Bachelor of Science in Engineering with a concentration in Innovation Design from Coastal Carolina University in 2023. During college, Emilio gained valuable experience as a football team member and intern with the Charleston International Airport Aviation Authority, where he transitioned into the IT Department. After graduating, he joined the Aviation Authority as an IT Technician and, within five months, was promoted to IT Application Support Analyst. In this role, Emilio develops and supports software applications while applying his engineering and technical expertise to create innovative solutions. He continues to grow in the fields of engineering, technology, and software development while using his skills to solve real world challenges.</p>
+        </div>
+      </div>
+      <span class="name-block">Emilio Wilson <span class="role">| Engineer</span></span>
+    </div>
+    <div class="nav-right">
+      <div class="weather" id="weatherWidget">
+        <span class="weather-icon" id="weatherIcon" aria-hidden="true"></span>
+        <span class="weather-temp" id="weatherTemp"></span>
+      </div>
+      <div class="nav-clock" id="navClock">—</div>
+    </div>
+  </div>
+</header>
+
+<div class="back-link"><a href="index.html">← Back to Project Hub</a></div>
+
+<section class="project-hero">
+  <div class="hero-index">01 — Facility infrastructure</div>
+  <div class="hero-frame">
+    <img src="images/signage.png" alt="Airport_Parking_Status_Fake_Demo API JSON feed alongside the physical parking garage signage it drives">
+  </div>
+  <h1>Digital Parking Signage Based on APIs</h1>
+  <div class="hero-tools">
+    <span>SQL Server</span><span>Stored Procedures</span><span>Azure</span><span>API</span><span>JavaScript</span><span>HTML</span><span>CSS</span>
+  </div>
+</section>
+
+<div class="accordion">
+
+  <details class="acc-item" open>
+    <summary>Project Overview <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>This is the digital parking signage system for the entry lanes at Charleston International Airport. It lets the physical entry signs change automatically based on a single field returned by an internal API: <code>EntrySignage</code>. When the API reports <code>EntrySignage</code> as Up, the sign rotates between its standard messaging, Hourly and $21.00 Per Day. When it reports Full, the sign displays Full. When it reports Down, the sign displays Closed.</p>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Project Goal <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>The goal is a better experience for arriving passengers. A lane that's no longer working, or a garage that's reached capacity or gone offline, gets communicated automatically and immediately, along with the correct daily rate, instead of a sign left showing outdated or incorrect information.</p>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Tools Used <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>The data comes from a primary source and is inserted into a database using SQL Server Management Studio (SSMS). Stored procedures are then used to process the data.</p>
+      <p>A computer script running through Azure calls the stored procedures and retrieves the results. The results are then provided through an API.</p>
+      <p>The API is used by a microsite built with HTML, CSS, and JavaScript. JavaScript regularly checks the API for updates so the microsite displays the current status and what each sign should be showing.</p>
+      <div class="data-flow">
+        <span>Primary Source</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>Database (SSMS)</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>Stored Procedures</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>Computer Script + Azure</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>API</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>Microsite (HTML, CSS, JavaScript)</span>
+      </div>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Code Reference <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <div class="code-ref">
+        <div class="cr-file"><span>Parking.js</span><a href="code/Parking.js" download>Download full file</a></div>
+        <pre class="code-full"><span class="tok-comment">/**
+ * SignalR Module - Airport_Parking_Status_Fake_Demo
+ * Real-time terminal equipment + facility capacity push from /hubs/Airport_Parking_Status_Fake_Demo
+ *
+ * ------------------------------------------------------
+ * THE ONLY LIVE FEED
+ * ------------------------------------------------------
+ *   /hubs/Airport_Parking_Status_Fake_Demo  -&gt; ReceiveAirport_Parking_Status_Fake_Demo
+ *   fallback: GET /api/Airport_Parking_Status_Fake_Demo
+ *   consumed by: src/sign-main.js
+ *
+ * Both the hub URLs and the HTTP URLs come from resilience.primary /
+ * resilience.failover, tried in that order.
+ *
+ * A second module used to sit alongside this one, feeding a lot-by-lot
+ * listing off /hubs/parking. That view and its whole data layer are gone,
+ * and config.json has no endpoints.parking, so this is now the single
+ * source of data for the display.
+ *
+ * ------------------------------------------------------
+ * RESILIENCE MODEL (retry-forever)
+ * ------------------------------------------------------
+ * Designed for 24/7 unattended signs. SignalR push is
+ * the primary data path; HTTP polling against /api/Airport_Parking_Status_Fake_Demo
+ * is a fallback that only runs during long outages. SignalR
+ * retries FOREVER - the connection is never given up on.
+ *
+ * Retry schedule (used by BOTH the initial-connect and
+ * reconnect-after-drop paths):
+ *   Attempts 1-5 (first ~47s):  0ms, 2s, 5s, 10s, 30s
+ *      SignalR-only. No HTTP polling.
+ *   Attempts 6+ (long outage):  30s forever
+ *      Keep retrying SignalR AND start 30s HTTP polling
+ *      so the display stays fresh until SignalR recovers.
+ *
+ * On any successful (re)connect:
+ *   - Stop fallback polling
+ *   - Re-invoke JoinAirport_Parking_Status_Fake_Demo (group membership doesn&#x27;t
+ *     survive a connection swap on the server)
+ *   - Do one HTTP fetch to catch up immediately
+ *
+ * ------------------------------------------------------
+ * PUBLIC API
+ * ------------------------------------------------------
+ *   connectAirport_Parking_Status_Fake_Demo(callback)  Connect once and wire pushes
+ *                                    to `callback(rows)`. Returns
+ *                                    nothing - connection runs in
+ *                                    the background and never
+ *                                    gives up.
+ *   isAirport_Parking_Status_Fake_DemoConnected()      true while WebSocket is up
+ *   isAirport_Parking_Status_Fake_DemoFallbackActive() true while 30s HTTP poll is
+ *                                    armed (long-outage mode)
+ *   getAirport_Parking_Status_Fake_DemoDiagnostics()   inspection object for debug
+ *   stopAirport_Parking_Status_Fake_Demo()             permanent shutdown (cleanup)
+ */</span>
+
+<span class="tok-keyword">import</span> {
+    <span class="tok-plain">isLocalhost</span>,
+    <span class="tok-plain">isResilienceEnabled</span>,
+    <span class="tok-plain">getResilienceEndpoints</span>,
+    <span class="tok-plain">getAirport_Parking_Status_Fake_DemoEndpoint</span>
+} <span class="tok-keyword">from</span> <span class="tok-string">&#x27;./config.js&#x27;</span>;
+<span class="tok-keyword">import</span> { <span class="tok-plain">logError</span> } <span class="tok-keyword">from</span> <span class="tok-string">&#x27;./logger.js&#x27;</span>;
+
+<span class="tok-comment">// -- Tunables (match signalr.js) -------------------------</span>
+<span class="tok-keyword">const</span> <span class="tok-plain">RETRY_SCHEDULE</span> = [0, 2000, 5000, 10000, 30000];
+<span class="tok-keyword">const</span> <span class="tok-plain">LONG_OUTAGE_DELAY</span> = 30000;
+<span class="tok-keyword">const</span> <span class="tok-plain">FALLBACK_INTERVAL</span> = 30000;
+
+<span class="tok-comment">// -- State (module-private) ------------------------------</span>
+<span class="tok-keyword">let</span> <span class="tok-plain">connection</span> = <span class="tok-keyword">null</span>;
+<span class="tok-keyword">let</span> <span class="tok-plain">signalRConnected</span> = <span class="tok-keyword">false</span>;
+<span class="tok-keyword">let</span> <span class="tok-plain">activeHubUrl</span> = <span class="tok-keyword">null</span>;
+<span class="tok-keyword">let</span> <span class="tok-plain">onRowsReceived</span> = <span class="tok-keyword">null</span>;
+
+<span class="tok-keyword">let</span> <span class="tok-plain">initialConnectAttempt</span> = 0;
+<span class="tok-keyword">let</span> <span class="tok-plain">pendingConnectTimer</span> = <span class="tok-keyword">null</span>;
+<span class="tok-keyword">let</span> <span class="tok-plain">connectLoopActive</span> = <span class="tok-keyword">false</span>;     <span class="tok-comment">// true while attemptInitialConnect is executing</span>
+<span class="tok-keyword">let</span> <span class="tok-plain">reconnectingCount</span> = 0;
+
+<span class="tok-keyword">let</span> <span class="tok-plain">fallbackTimer</span> = <span class="tok-keyword">null</span>;
+<span class="tok-keyword">let</span> <span class="tok-plain">stopRequested</span> = <span class="tok-keyword">false</span>;
+
+<span class="tok-comment">/**
+ * Derive the hub URL(s) for /hubs/Airport_Parking_Status_Fake_Demo.
+ *
+ * Both modes now start from the Airport_Parking_Status_Fake_Demo endpoint itself, not from
+ * the parking endpoint - the two feeds are configured separately in
+ * config.json, so there is nothing to swap.
+ */</span>
+<span class="tok-keyword">function</span> <span class="tok-plain">getHubUrls</span>() {
+    <span class="tok-keyword">return</span> <span class="tok-plain">getFeedUrls</span>(<span class="tok-string">&#x27;/hubs/Airport_Parking_Status_Fake_Demo&#x27;</span>, <span class="tok-string">&#x27;Airport_Parking_Status_Fake_Demo hub&#x27;</span>);
+}
+
+<span class="tok-comment">/**
+ * Derive the HTTP URL(s) for the catch-up fetch and the long-outage
+ * polling. Same resolution as getHubUrls(), different path.
+ */</span>
+<span class="tok-keyword">function</span> <span class="tok-plain">getHttpUrls</span>() {
+    <span class="tok-keyword">return</span> <span class="tok-plain">getFeedUrls</span>(<span class="tok-string">&#x27;/api/Airport_Parking_Status_Fake_Demo&#x27;</span>, <span class="tok-string">&#x27;Airport_Parking_Status_Fake_Demo HTTP&#x27;</span>);
+}
+
+<span class="tok-comment">/**
+ * Shared resolution for both of the above.
+ *
+ * In resilience mode the configured primary/failover pair is used in
+ * order. Otherwise the single configured Airport_Parking_Status_Fake_Demo endpoint is used.
+ * On localhost, demo mode - no URLs at all.
+ *
+ * @param {string} path  &#x27;/hubs/Airport_Parking_Status_Fake_Demo&#x27; or &#x27;/api/Airport_Parking_Status_Fake_Demo&#x27;
+ * @param {string} label for log lines
+ * @returns {string[]} URLs in priority order
+ */</span>
+<span class="tok-keyword">function</span> <span class="tok-plain">getFeedUrls</span>(<span class="tok-plain">path</span>, <span class="tok-plain">label</span>) {
+    <span class="tok-keyword">if</span> (<span class="tok-plain">isLocalhost</span>()) <span class="tok-keyword">return</span> [];
+
+    <span class="tok-keyword">const</span> <span class="tok-plain">swapPath</span> = (<span class="tok-plain">u</span>) =&gt; {
+        <span class="tok-keyword">try</span> {
+            <span class="tok-keyword">const</span> <span class="tok-plain">url</span> = <span class="tok-keyword">new</span> <span class="tok-plain">URL</span>(<span class="tok-plain">u</span>);
+            <span class="tok-keyword">return</span> <span class="tok-string">`${url.protocol}//${url.host}${path}`</span>;
+        } <span class="tok-keyword">catch</span> (<span class="tok-plain">e</span>) {
+            <span class="tok-plain">console</span>.<span class="tok-plain">warn</span>(<span class="tok-string">`${label}: could not parse endpoint URL`</span>, <span class="tok-plain">u</span>);
+            <span class="tok-keyword">return</span> <span class="tok-keyword">null</span>;
+        }
+    };
+
+    <span class="tok-keyword">if</span> (<span class="tok-plain">isResilienceEnabled</span>()) {
+        <span class="tok-keyword">const</span> <span class="tok-plain">endpoints</span> = <span class="tok-plain">getResilienceEndpoints</span>();
+        <span class="tok-keyword">if</span> (!<span class="tok-plain">endpoints</span>?.<span class="tok-plain">primary</span>) {
+            <span class="tok-plain">console</span>.<span class="tok-plain">warn</span>(<span class="tok-string">`${label}: resilience mode but no primary endpoint configured`</span>);
+            <span class="tok-keyword">return</span> [];
+        }
+        <span class="tok-keyword">const</span> <span class="tok-plain">urls</span> = [<span class="tok-plain">endpoints</span>.<span class="tok-plain">primary</span>, <span class="tok-plain">endpoints</span>.<span class="tok-plain">failover</span>]
+            .<span class="tok-plain">filter</span>(<span class="tok-plain">Boolean</span>)
+            .<span class="tok-plain">map</span>(<span class="tok-plain">swapPath</span>)
+            .<span class="tok-plain">filter</span>(<span class="tok-plain">Boolean</span>);
+        <span class="tok-comment">// Dedupe: if primary and failover resolve to the same host, don&#x27;t</span>
+        <span class="tok-comment">// attempt the same URL twice per retry round.</span>
+        <span class="tok-keyword">return</span> [...<span class="tok-keyword">new</span> <span class="tok-plain">Set</span>(<span class="tok-plain">urls</span>)];
+    }
+
+    <span class="tok-keyword">const</span> <span class="tok-plain">endpoint</span> = <span class="tok-plain">getAirport_Parking_Status_Fake_DemoEndpoint</span>();
+    <span class="tok-keyword">if</span> (!<span class="tok-plain">endpoint</span>) <span class="tok-keyword">return</span> [];
+    <span class="tok-keyword">const</span> <span class="tok-plain">one</span> = <span class="tok-plain">swapPath</span>(<span class="tok-plain">endpoint</span>);
+    <span class="tok-keyword">return</span> <span class="tok-plain">one</span> ? [<span class="tok-plain">one</span>] : [];
+}
+
+<span class="tok-comment">/**
+ * Connect to the terminal-status hub and start receiving pushes.
+ * Idempotent - calling twice is a no-op.
+ *
+ * @param {Function} callback - receives the rows array on each push
+ */</span>
+<span class="tok-keyword">export</span> <span class="tok-keyword">function</span> <span class="tok-plain">connectAirport_Parking_Status_Fake_Demo</span>(<span class="tok-plain">callback</span>) {
+    <span class="tok-keyword">if</span> (<span class="tok-plain">connection</span> || <span class="tok-plain">pendingConnectTimer</span> || <span class="tok-plain">connectLoopActive</span>) {
+        <span class="tok-plain">console</span>.<span class="tok-plain">warn</span>(<span class="tok-string">&#x27;Airport_Parking_Status_Fake_Demo: connectAirport_Parking_Status_Fake_Demo called twice, ignoring&#x27;</span>);
+        <span class="tok-keyword">return</span>;
+    }
+
+    <span class="tok-plain">onRowsReceived</span> = <span class="tok-plain">callback</span>;
+    <span class="tok-plain">stopRequested</span> = <span class="tok-keyword">false</span>;
+    <span class="tok-plain">initialConnectAttempt</span> = 0;
+
+    <span class="tok-keyword">const</span> <span class="tok-plain">hubUrls</span> = <span class="tok-plain">getHubUrls</span>();
+    <span class="tok-keyword">if</span> (<span class="tok-plain">hubUrls</span>.<span class="tok-plain">length</span> === 0) {
+        <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">&#x27;[demo] Airport_Parking_Status_Fake_Demo: no hub URLs (localhost/demo) - disabled&#x27;</span>);
+        <span class="tok-keyword">return</span>;
+    }
+
+    <span class="tok-keyword">if</span> (<span class="tok-keyword">typeof</span> <span class="tok-plain">signalR</span> === <span class="tok-string">&#x27;undefined&#x27;</span>) {
+        <span class="tok-plain">console</span>.<span class="tok-plain">error</span>(<span class="tok-string">&#x27;[fail] Airport_Parking_Status_Fake_Demo: SignalR library not loaded - falling back to HTTP polling only&#x27;</span>);
+        <span class="tok-plain">startFallbackPoll</span>();
+        <span class="tok-keyword">return</span>;
+    }
+
+    <span class="tok-plain">attemptInitialConnect</span>();
+}
+
+<span class="tok-keyword">async</span> <span class="tok-keyword">function</span> <span class="tok-plain">attemptInitialConnect</span>() {
+    <span class="tok-keyword">if</span> (<span class="tok-plain">stopRequested</span>) { <span class="tok-plain">connectLoopActive</span> = <span class="tok-keyword">false</span>; <span class="tok-keyword">return</span>; }
+    <span class="tok-plain">connectLoopActive</span> = <span class="tok-keyword">true</span>;
+    <span class="tok-plain">pendingConnectTimer</span> = <span class="tok-keyword">null</span>;
+
+    <span class="tok-keyword">const</span> <span class="tok-plain">hubUrls</span> = <span class="tok-plain">getHubUrls</span>();
+    <span class="tok-keyword">let</span> <span class="tok-plain">lastError</span> = <span class="tok-keyword">null</span>;
+
+    <span class="tok-keyword">for</span> (<span class="tok-keyword">const</span> <span class="tok-plain">hubUrl</span> <span class="tok-keyword">of</span> <span class="tok-plain">hubUrls</span>) {
+        <span class="tok-keyword">if</span> (<span class="tok-plain">stopRequested</span>) { <span class="tok-plain">connectLoopActive</span> = <span class="tok-keyword">false</span>; <span class="tok-keyword">return</span>; }
+
+        <span class="tok-keyword">try</span> {
+            <span class="tok-keyword">await</span> <span class="tok-plain">tryConnect</span>(<span class="tok-plain">hubUrl</span>);
+            <span class="tok-plain">initialConnectAttempt</span> = 0;
+            <span class="tok-plain">stopFallbackPoll</span>();
+            <span class="tok-plain">connectLoopActive</span> = <span class="tok-keyword">false</span>;
+            <span class="tok-keyword">return</span>;
+        } <span class="tok-keyword">catch</span> (<span class="tok-plain">err</span>) {
+            <span class="tok-plain">lastError</span> = <span class="tok-plain">err</span>;
+            <span class="tok-plain">console</span>.<span class="tok-plain">warn</span>(<span class="tok-string">`[fail] Airport_Parking_Status_Fake_Demo: connect failed for ${hubUrl}: ${err?.message || err}`</span>);
+        }
+    }
+
+    <span class="tok-keyword">const</span> <span class="tok-plain">attemptNum</span> = <span class="tok-plain">initialConnectAttempt</span>;
+    <span class="tok-keyword">const</span> <span class="tok-plain">delay</span> = <span class="tok-plain">attemptNum</span> &lt; <span class="tok-plain">RETRY_SCHEDULE</span>.<span class="tok-plain">length</span>
+        ? <span class="tok-plain">RETRY_SCHEDULE</span>[<span class="tok-plain">attemptNum</span>]
+        : <span class="tok-plain">LONG_OUTAGE_DELAY</span>;
+    <span class="tok-plain">initialConnectAttempt</span>++;
+
+    <span class="tok-plain">console</span>.<span class="tok-plain">warn</span>(
+        <span class="tok-string">`[net] Airport_Parking_Status_Fake_Demo: initial connect attempt ${initialConnectAttempt} failed `</span> +
+        <span class="tok-string">`(${lastError?.message || &#x27;unknown error&#x27;}). Retrying in ${delay}ms...`</span>
+    );
+
+    <span class="tok-keyword">if</span> (<span class="tok-plain">initialConnectAttempt</span> &gt; <span class="tok-plain">RETRY_SCHEDULE</span>.<span class="tok-plain">length</span>) {
+        <span class="tok-plain">startFallbackPoll</span>();
+    }
+
+    <span class="tok-plain">pendingConnectTimer</span> = <span class="tok-plain">setTimeout</span>(<span class="tok-plain">attemptInitialConnect</span>, <span class="tok-plain">delay</span>);
+}
+
+<span class="tok-keyword">async</span> <span class="tok-keyword">function</span> <span class="tok-plain">tryConnect</span>(<span class="tok-plain">hubUrl</span>) {
+    <span class="tok-comment">// Mark the stop as intentional so its onclose handler doesn&#x27;t</span>
+    <span class="tok-comment">// treat it as a failure (start polling / spawn another loop).</span>
+    <span class="tok-keyword">if</span> (<span class="tok-plain">connection</span>) {
+        <span class="tok-plain">connection</span>.<span class="tok-plain">_intentionalStop</span> = <span class="tok-keyword">true</span>;
+        <span class="tok-keyword">try</span> { <span class="tok-keyword">await</span> <span class="tok-plain">connection</span>.<span class="tok-plain">stop</span>(); } <span class="tok-keyword">catch</span> (<span class="tok-plain">_</span>) { }
+        <span class="tok-plain">connection</span> = <span class="tok-keyword">null</span>;
+    }
+
+    <span class="tok-keyword">const</span> <span class="tok-plain">retryPolicy</span> = {
+        <span class="tok-plain">nextRetryDelayInMilliseconds</span>: (<span class="tok-plain">retryContext</span>) =&gt; {
+            <span class="tok-keyword">const</span> <span class="tok-plain">attempt</span> = <span class="tok-plain">retryContext</span>.<span class="tok-plain">previousRetryCount</span>;
+            <span class="tok-keyword">if</span> (<span class="tok-plain">attempt</span> &gt;= <span class="tok-plain">RETRY_SCHEDULE</span>.<span class="tok-plain">length</span>) {
+                <span class="tok-plain">startFallbackPoll</span>();
+                <span class="tok-keyword">return</span> <span class="tok-plain">LONG_OUTAGE_DELAY</span>;
+            }
+            <span class="tok-keyword">return</span> <span class="tok-plain">RETRY_SCHEDULE</span>[<span class="tok-plain">attempt</span>];
+        }
+    };
+
+    <span class="tok-keyword">const</span> <span class="tok-plain">conn</span> = <span class="tok-keyword">new</span> <span class="tok-plain">signalR</span>.<span class="tok-plain">HubConnectionBuilder</span>()
+        .<span class="tok-plain">withUrl</span>(<span class="tok-plain">hubUrl</span>)
+        .<span class="tok-plain">withAutomaticReconnect</span>(<span class="tok-plain">retryPolicy</span>)
+        .<span class="tok-plain">configureLogging</span>(<span class="tok-plain">signalR</span>.<span class="tok-plain">LogLevel</span>.<span class="tok-plain">Warning</span>)
+        .<span class="tok-plain">build</span>();
+
+    <span class="tok-comment">// -- Receive terminal-status push ----------------------</span>
+    <span class="tok-plain">conn</span>.<span class="tok-plain">on</span>(<span class="tok-string">&#x27;ReceiveAirport_Parking_Status_Fake_Demo&#x27;</span>, (<span class="tok-plain">rows</span>) =&gt; {
+        <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">`[net] Airport_Parking_Status_Fake_Demo: received ${rows?.length || 0} terminal rows`</span>);
+        <span class="tok-plain">reconnectingCount</span> = 0;
+        <span class="tok-plain">stopFallbackPoll</span>();
+        <span class="tok-keyword">if</span> (<span class="tok-plain">onRowsReceived</span> &amp;&amp; <span class="tok-plain">rows</span>) {
+            <span class="tok-plain">onRowsReceived</span>(<span class="tok-plain">rows</span>);
+        }
+    });
+
+    <span class="tok-plain">conn</span>.<span class="tok-plain">onreconnecting</span>((<span class="tok-plain">error</span>) =&gt; {
+        <span class="tok-plain">signalRConnected</span> = <span class="tok-keyword">false</span>;
+        <span class="tok-plain">reconnectingCount</span>++;
+        <span class="tok-plain">console</span>.<span class="tok-plain">warn</span>(
+            <span class="tok-string">`[retry] Airport_Parking_Status_Fake_Demo: reconnecting (attempt ${reconnectingCount})`</span>,
+            <span class="tok-plain">error</span>?.<span class="tok-plain">message</span> || <span class="tok-string">&#x27;&#x27;</span>
+        );
+    });
+
+    <span class="tok-plain">conn</span>.<span class="tok-plain">onreconnected</span>(<span class="tok-keyword">async</span> (<span class="tok-plain">connectionId</span>) =&gt; {
+        <span class="tok-plain">signalRConnected</span> = <span class="tok-keyword">true</span>;
+        <span class="tok-plain">reconnectingCount</span> = 0;
+        <span class="tok-plain">stopFallbackPoll</span>();
+        <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">`[ok] Airport_Parking_Status_Fake_Demo: reconnected (${connectionId})`</span>);
+
+        <span class="tok-keyword">try</span> {
+            <span class="tok-keyword">await</span> <span class="tok-plain">conn</span>.<span class="tok-plain">invoke</span>(<span class="tok-string">&#x27;JoinAirport_Parking_Status_Fake_Demo&#x27;</span>);
+            <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">&#x27;[ok] Airport_Parking_Status_Fake_Demo: re-joined Airport_Parking_Status_Fake_Demo group&#x27;</span>);
+        } <span class="tok-keyword">catch</span> (<span class="tok-plain">err</span>) {
+            <span class="tok-plain">console</span>.<span class="tok-plain">error</span>(<span class="tok-string">&#x27;[fail] Airport_Parking_Status_Fake_Demo: failed to re-join group:&#x27;</span>, <span class="tok-plain">err</span>.<span class="tok-plain">message</span>);
+        }
+
+        <span class="tok-keyword">try</span> {
+            <span class="tok-keyword">const</span> <span class="tok-plain">data</span> = <span class="tok-keyword">await</span> <span class="tok-plain">fetchAirport_Parking_Status_Fake_Demo</span>();
+            <span class="tok-keyword">if</span> (<span class="tok-plain">data</span> &amp;&amp; <span class="tok-plain">onRowsReceived</span>) <span class="tok-plain">onRowsReceived</span>(<span class="tok-plain">data</span>);
+        } <span class="tok-keyword">catch</span> (<span class="tok-plain">_</span>) { <span class="tok-comment">/* fetchAirport_Parking_Status_Fake_Demo logs its own errors */</span> }
+    });
+
+    <span class="tok-plain">conn</span>.<span class="tok-plain">onclose</span>((<span class="tok-plain">error</span>) =&gt; {
+        <span class="tok-plain">signalRConnected</span> = <span class="tok-keyword">false</span>;
+
+        <span class="tok-comment">// Deliberate internal stop (teardown or join-failure cleanup)</span>
+        <span class="tok-comment">// - not an outage. Don&#x27;t poll, don&#x27;t restart anything.</span>
+        <span class="tok-keyword">if</span> (<span class="tok-plain">conn</span>.<span class="tok-plain">_intentionalStop</span> || <span class="tok-plain">stopRequested</span>) <span class="tok-keyword">return</span>;
+
+        <span class="tok-plain">console</span>.<span class="tok-plain">error</span>(<span class="tok-string">&#x27;[fail] Airport_Parking_Status_Fake_Demo: connection closed&#x27;</span>, <span class="tok-plain">error</span>?.<span class="tok-plain">message</span> || <span class="tok-string">&#x27;unknown&#x27;</span>);
+
+        <span class="tok-plain">startFallbackPoll</span>();
+
+        <span class="tok-comment">// If a connect loop is already executing or scheduled,</span>
+        <span class="tok-comment">// let it finish - starting a second concurrent loop here</span>
+        <span class="tok-comment">// is how orphaned duplicate connections get created.</span>
+        <span class="tok-keyword">if</span> (<span class="tok-plain">connectLoopActive</span> || <span class="tok-plain">pendingConnectTimer</span>) {
+            <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">&#x27;Airport_Parking_Status_Fake_Demo: rebuild already in progress, not starting another&#x27;</span>);
+            <span class="tok-keyword">return</span>;
+        }
+
+        <span class="tok-plain">initialConnectAttempt</span> = 0;
+        <span class="tok-plain">attemptInitialConnect</span>();
+    });
+
+    <span class="tok-keyword">await</span> <span class="tok-plain">conn</span>.<span class="tok-plain">start</span>();
+    <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">`[ok] Airport_Parking_Status_Fake_Demo: connected to ${hubUrl}`</span>);
+
+    <span class="tok-comment">// If the join fails, the WebSocket is OPEN but the conn was</span>
+    <span class="tok-comment">// never committed to `connection` - without an explicit stop()</span>
+    <span class="tok-comment">// here it would leak as a live, auto-reconnecting zombie that</span>
+    <span class="tok-comment">// no cleanup path can ever reach.</span>
+    <span class="tok-keyword">try</span> {
+        <span class="tok-keyword">await</span> <span class="tok-plain">conn</span>.<span class="tok-plain">invoke</span>(<span class="tok-string">&#x27;JoinAirport_Parking_Status_Fake_Demo&#x27;</span>);
+    } <span class="tok-keyword">catch</span> (<span class="tok-plain">err</span>) {
+        <span class="tok-plain">conn</span>.<span class="tok-plain">_intentionalStop</span> = <span class="tok-keyword">true</span>;
+        <span class="tok-keyword">try</span> { <span class="tok-keyword">await</span> <span class="tok-plain">conn</span>.<span class="tok-plain">stop</span>(); } <span class="tok-keyword">catch</span> (<span class="tok-plain">_</span>) { }
+        <span class="tok-keyword">throw</span> <span class="tok-plain">err</span>;
+    }
+    <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">&#x27;[ok] Airport_Parking_Status_Fake_Demo: joined Airport_Parking_Status_Fake_Demo group&#x27;</span>);
+
+    <span class="tok-plain">connection</span> = <span class="tok-plain">conn</span>;
+    <span class="tok-plain">signalRConnected</span> = <span class="tok-keyword">true</span>;
+    <span class="tok-plain">activeHubUrl</span> = <span class="tok-plain">hubUrl</span>;
+
+    <span class="tok-keyword">try</span> {
+        <span class="tok-keyword">const</span> <span class="tok-plain">data</span> = <span class="tok-keyword">await</span> <span class="tok-plain">fetchAirport_Parking_Status_Fake_Demo</span>();
+        <span class="tok-keyword">if</span> (<span class="tok-plain">data</span> &amp;&amp; <span class="tok-plain">onRowsReceived</span>) <span class="tok-plain">onRowsReceived</span>(<span class="tok-plain">data</span>);
+    } <span class="tok-keyword">catch</span> (<span class="tok-plain">_</span>) { <span class="tok-comment">/* fetchAirport_Parking_Status_Fake_Demo logs its own errors */</span> }
+}
+
+<span class="tok-comment">/* ----------------------------------------------------------
+   HTTP-ONLY MODE
+   No SignalR at all - GET /api/Airport_Parking_Status_Fake_Demo on an interval.
+   Selected by `source=http` in ViewTypeSettings.txt.
+   ---------------------------------------------------------- */</span>
+
+<span class="tok-comment">// Tighter than FALLBACK_INTERVAL because here polling is the only data</span>
+<span class="tok-comment">// path, not a stopgap.</span>
+<span class="tok-keyword">const</span> <span class="tok-plain">HTTP_ONLY_INTERVAL</span> = 15000;
+
+<span class="tok-keyword">let</span> <span class="tok-plain">httpOnlyMode</span> = <span class="tok-keyword">false</span>;
+<span class="tok-keyword">let</span> <span class="tok-plain">httpOnlyTimer</span> = <span class="tok-keyword">null</span>;
+<span class="tok-keyword">let</span> <span class="tok-plain">httpOnlyInterval</span> = <span class="tok-plain">HTTP_ONLY_INTERVAL</span>;
+
+<span class="tok-comment">/**
+ * Start HTTP-only polling of /api/Airport_Parking_Status_Fake_Demo. Fetches immediately, then
+ * every `intervalMs`. Never gives up: a failed poll logs and the next one is
+ * still scheduled.
+ *
+ * @param {Function} callback - receives the rows array on each success
+ * @param {number} [intervalMs=15000]
+ */</span>
+<span class="tok-keyword">export</span> <span class="tok-keyword">function</span> <span class="tok-plain">startAirport_Parking_Status_Fake_DemoPolling</span>(<span class="tok-plain">callback</span>, <span class="tok-plain">intervalMs</span> = <span class="tok-plain">HTTP_ONLY_INTERVAL</span>) {
+    <span class="tok-keyword">if</span> (<span class="tok-plain">connection</span> || <span class="tok-plain">pendingConnectTimer</span> || <span class="tok-plain">connectLoopActive</span>) {
+        <span class="tok-plain">console</span>.<span class="tok-plain">warn</span>(<span class="tok-string">&#x27;Airport_Parking_Status_Fake_Demo: SignalR mode is running, ignoring startAirport_Parking_Status_Fake_DemoPolling&#x27;</span>);
+        <span class="tok-keyword">return</span>;
+    }
+    <span class="tok-keyword">if</span> (<span class="tok-plain">httpOnlyMode</span>) {
+        <span class="tok-plain">console</span>.<span class="tok-plain">warn</span>(<span class="tok-string">&#x27;Airport_Parking_Status_Fake_Demo: HTTP-only polling already started, ignoring&#x27;</span>);
+        <span class="tok-keyword">return</span>;
+    }
+
+    <span class="tok-keyword">const</span> <span class="tok-plain">urls</span> = <span class="tok-plain">getHttpUrls</span>();
+    <span class="tok-keyword">if</span> (<span class="tok-plain">urls</span>.<span class="tok-plain">length</span> === 0) {
+        <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">&#x27;[demo] Airport_Parking_Status_Fake_Demo: no HTTP URLs (localhost/demo) - polling disabled&#x27;</span>);
+        <span class="tok-keyword">return</span>;
+    }
+
+    <span class="tok-plain">onRowsReceived</span> = <span class="tok-plain">callback</span>;
+    <span class="tok-plain">stopRequested</span> = <span class="tok-keyword">false</span>;
+    <span class="tok-plain">httpOnlyMode</span> = <span class="tok-keyword">true</span>;
+    <span class="tok-plain">httpOnlyInterval</span> = <span class="tok-plain">Number</span>(<span class="tok-plain">intervalMs</span>) &gt; 0 ? <span class="tok-plain">Number</span>(<span class="tok-plain">intervalMs</span>) : <span class="tok-plain">HTTP_ONLY_INTERVAL</span>;
+
+    <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">`[net] Airport_Parking_Status_Fake_Demo: HTTP-only polling every ${httpOnlyInterval}ms -&gt; ${urls[0]}`</span>);
+    <span class="tok-plain">httpOnlyPoll</span>();
+}
+
+<span class="tok-keyword">async</span> <span class="tok-keyword">function</span> <span class="tok-plain">httpOnlyPoll</span>() {
+    <span class="tok-keyword">if</span> (<span class="tok-plain">stopRequested</span> || !<span class="tok-plain">httpOnlyMode</span>) { <span class="tok-plain">httpOnlyTimer</span> = <span class="tok-keyword">null</span>; <span class="tok-keyword">return</span>; }
+
+    <span class="tok-keyword">try</span> {
+        <span class="tok-keyword">const</span> <span class="tok-plain">data</span> = <span class="tok-keyword">await</span> <span class="tok-plain">fetchAirport_Parking_Status_Fake_Demo</span>();
+        <span class="tok-keyword">if</span> (<span class="tok-plain">data</span> &amp;&amp; <span class="tok-plain">onRowsReceived</span>) <span class="tok-plain">onRowsReceived</span>(<span class="tok-plain">data</span>);
+    } <span class="tok-keyword">catch</span> (<span class="tok-plain">err</span>) {
+        <span class="tok-plain">logError</span>(<span class="tok-string">`Airport_Parking_Status_Fake_Demo HTTP-only poll failed: ${err?.message || err}`</span>);
+    }
+
+    <span class="tok-keyword">if</span> (!<span class="tok-plain">stopRequested</span> &amp;&amp; <span class="tok-plain">httpOnlyMode</span>) {
+        <span class="tok-plain">httpOnlyTimer</span> = <span class="tok-plain">setTimeout</span>(<span class="tok-plain">httpOnlyPoll</span>, <span class="tok-plain">httpOnlyInterval</span>);
+    } <span class="tok-keyword">else</span> {
+        <span class="tok-plain">httpOnlyTimer</span> = <span class="tok-keyword">null</span>;
+    }
+}
+
+<span class="tok-comment">/** Stop HTTP-only polling. Safe to call when it isn&#x27;t running. */</span>
+<span class="tok-keyword">export</span> <span class="tok-keyword">function</span> <span class="tok-plain">stopAirport_Parking_Status_Fake_DemoPolling</span>() {
+    <span class="tok-plain">httpOnlyMode</span> = <span class="tok-keyword">false</span>;
+    <span class="tok-keyword">if</span> (<span class="tok-plain">httpOnlyTimer</span>) {
+        <span class="tok-plain">clearTimeout</span>(<span class="tok-plain">httpOnlyTimer</span>);
+        <span class="tok-plain">httpOnlyTimer</span> = <span class="tok-keyword">null</span>;
+        <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">&#x27;[net] Airport_Parking_Status_Fake_Demo: HTTP-only polling stopped&#x27;</span>);
+    }
+}
+
+<span class="tok-comment">/* ----------------------------------------------------------
+   FALLBACK HTTP POLLING
+   Activates when SignalR is in a long outage. Tries primary
+   then failover within each poll attempt.
+   ---------------------------------------------------------- */</span>
+
+<span class="tok-keyword">function</span> <span class="tok-plain">startFallbackPoll</span>() {
+    <span class="tok-keyword">if</span> (<span class="tok-plain">fallbackTimer</span>) <span class="tok-keyword">return</span>;
+    <span class="tok-keyword">if</span> (<span class="tok-plain">stopRequested</span>) <span class="tok-keyword">return</span>;
+    <span class="tok-keyword">if</span> (<span class="tok-plain">httpOnlyMode</span>) <span class="tok-keyword">return</span>;   <span class="tok-comment">// already polling on purpose</span>
+    <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">&#x27;[net] Airport_Parking_Status_Fake_Demo: starting fallback HTTP poll (30s)&#x27;</span>);
+    <span class="tok-plain">fallbackPoll</span>();
+}
+
+<span class="tok-keyword">function</span> <span class="tok-plain">stopFallbackPoll</span>() {
+    <span class="tok-keyword">if</span> (<span class="tok-plain">fallbackTimer</span>) {
+        <span class="tok-plain">clearTimeout</span>(<span class="tok-plain">fallbackTimer</span>);
+        <span class="tok-plain">fallbackTimer</span> = <span class="tok-keyword">null</span>;
+        <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">&#x27;[net] Airport_Parking_Status_Fake_Demo: fallback HTTP poll stopped&#x27;</span>);
+    }
+}
+
+<span class="tok-keyword">async</span> <span class="tok-keyword">function</span> <span class="tok-plain">fallbackPoll</span>() {
+    <span class="tok-keyword">if</span> (<span class="tok-plain">stopRequested</span>) { <span class="tok-plain">fallbackTimer</span> = <span class="tok-keyword">null</span>; <span class="tok-keyword">return</span>; }
+    <span class="tok-keyword">if</span> (<span class="tok-plain">signalRConnected</span>) { <span class="tok-plain">fallbackTimer</span> = <span class="tok-keyword">null</span>; <span class="tok-keyword">return</span>; }
+
+    <span class="tok-keyword">try</span> {
+        <span class="tok-keyword">const</span> <span class="tok-plain">data</span> = <span class="tok-keyword">await</span> <span class="tok-plain">fetchAirport_Parking_Status_Fake_Demo</span>();
+        <span class="tok-keyword">if</span> (<span class="tok-plain">data</span> &amp;&amp; <span class="tok-plain">onRowsReceived</span>) <span class="tok-plain">onRowsReceived</span>(<span class="tok-plain">data</span>);
+    } <span class="tok-keyword">catch</span> (<span class="tok-plain">err</span>) {
+        <span class="tok-plain">logError</span>(<span class="tok-string">`Airport_Parking_Status_Fake_Demo fallback poll failed: ${err?.message || err}`</span>);
+    }
+
+    <span class="tok-keyword">if</span> (!<span class="tok-plain">stopRequested</span> &amp;&amp; !<span class="tok-plain">signalRConnected</span>) {
+        <span class="tok-plain">fallbackTimer</span> = <span class="tok-plain">setTimeout</span>(<span class="tok-plain">fallbackPoll</span>, <span class="tok-plain">FALLBACK_INTERVAL</span>);
+    } <span class="tok-keyword">else</span> {
+        <span class="tok-plain">fallbackTimer</span> = <span class="tok-keyword">null</span>;
+    }
+}
+
+<span class="tok-comment">/**
+ * HTTP fetch of /api/Airport_Parking_Status_Fake_Demo. Tries primary then failover
+ * (when resilience is enabled). Used by:
+ *   - initial catch-up after successful connect
+ *   - reconnect catch-up
+ *   - fallback polling during long outages
+ *
+ * Kept inline in this module so the sign has exactly one data layer and
+ * no shared fetch helper to keep in step with it.
+ *
+ * @returns {Promise&lt;Array|null&gt;} rows array, or null on failure
+ */</span>
+<span class="tok-keyword">async</span> <span class="tok-keyword">function</span> <span class="tok-plain">fetchAirport_Parking_Status_Fake_Demo</span>() {
+    <span class="tok-keyword">const</span> <span class="tok-plain">urls</span> = <span class="tok-plain">getHttpUrls</span>();
+    <span class="tok-keyword">if</span> (<span class="tok-plain">urls</span>.<span class="tok-plain">length</span> === 0) <span class="tok-keyword">return</span> <span class="tok-keyword">null</span>;
+
+    <span class="tok-keyword">let</span> <span class="tok-plain">lastError</span> = <span class="tok-keyword">null</span>;
+    <span class="tok-keyword">for</span> (<span class="tok-keyword">const</span> <span class="tok-plain">url</span> <span class="tok-keyword">of</span> <span class="tok-plain">urls</span>) {
+        <span class="tok-keyword">try</span> {
+            <span class="tok-keyword">const</span> <span class="tok-plain">response</span> = <span class="tok-keyword">await</span> <span class="tok-plain">fetch</span>(<span class="tok-plain">url</span>, { <span class="tok-plain">cache</span>: <span class="tok-string">&#x27;no-store&#x27;</span> });
+            <span class="tok-keyword">if</span> (!<span class="tok-plain">response</span>.<span class="tok-plain">ok</span>) {
+                <span class="tok-plain">lastError</span> = <span class="tok-keyword">new</span> <span class="tok-plain">Error</span>(<span class="tok-string">`HTTP ${response.status}`</span>);
+                <span class="tok-keyword">continue</span>;
+            }
+            <span class="tok-keyword">const</span> <span class="tok-plain">data</span> = <span class="tok-keyword">await</span> <span class="tok-plain">response</span>.<span class="tok-plain">json</span>();
+            <span class="tok-keyword">return</span> <span class="tok-plain">Array</span>.<span class="tok-plain">isArray</span>(<span class="tok-plain">data</span>) ? <span class="tok-plain">data</span> : <span class="tok-keyword">null</span>;
+        } <span class="tok-keyword">catch</span> (<span class="tok-plain">err</span>) {
+            <span class="tok-plain">lastError</span> = <span class="tok-plain">err</span>;
+        }
+    }
+
+    <span class="tok-plain">logError</span>(<span class="tok-string">`fetchAirport_Parking_Status_Fake_Demo: all URLs failed (${lastError?.message || &#x27;unknown&#x27;})`</span>);
+    <span class="tok-keyword">return</span> <span class="tok-keyword">null</span>;
+}
+
+<span class="tok-comment">/* ----------------------------------------------------------
+   STATUS &amp; CLEANUP
+   ---------------------------------------------------------- */</span>
+
+<span class="tok-keyword">export</span> <span class="tok-keyword">function</span> <span class="tok-plain">isAirport_Parking_Status_Fake_DemoConnected</span>() {
+    <span class="tok-keyword">return</span> <span class="tok-plain">signalRConnected</span>
+        &amp;&amp; <span class="tok-plain">connection</span>
+        &amp;&amp; <span class="tok-plain">connection</span>.<span class="tok-plain">state</span> === <span class="tok-plain">signalR</span>.<span class="tok-plain">HubConnectionState</span>.<span class="tok-plain">Connected</span>;
+}
+
+<span class="tok-keyword">export</span> <span class="tok-keyword">function</span> <span class="tok-plain">isAirport_Parking_Status_Fake_DemoFallbackActive</span>() {
+    <span class="tok-keyword">return</span> <span class="tok-plain">fallbackTimer</span> !== <span class="tok-keyword">null</span>;
+}
+
+<span class="tok-keyword">export</span> <span class="tok-keyword">async</span> <span class="tok-keyword">function</span> <span class="tok-plain">stopAirport_Parking_Status_Fake_Demo</span>() {
+    <span class="tok-plain">stopRequested</span> = <span class="tok-keyword">true</span>;
+    <span class="tok-plain">stopFallbackPoll</span>();
+    <span class="tok-plain">stopAirport_Parking_Status_Fake_DemoPolling</span>();
+
+    <span class="tok-keyword">if</span> (<span class="tok-plain">pendingConnectTimer</span>) {
+        <span class="tok-plain">clearTimeout</span>(<span class="tok-plain">pendingConnectTimer</span>);
+        <span class="tok-plain">pendingConnectTimer</span> = <span class="tok-keyword">null</span>;
+    }
+    <span class="tok-comment">// Any in-flight attemptInitialConnect will exit at its next</span>
+    <span class="tok-comment">// stopRequested checkpoint; clear the flag so a future</span>
+    <span class="tok-comment">// connectAirport_Parking_Status_Fake_Demo() isn&#x27;t blocked forever.</span>
+    <span class="tok-plain">connectLoopActive</span> = <span class="tok-keyword">false</span>;
+
+    <span class="tok-keyword">if</span> (<span class="tok-plain">connection</span>) {
+        <span class="tok-plain">connection</span>.<span class="tok-plain">_intentionalStop</span> = <span class="tok-keyword">true</span>;
+        <span class="tok-keyword">try</span> {
+            <span class="tok-keyword">await</span> <span class="tok-plain">connection</span>.<span class="tok-plain">stop</span>();
+            <span class="tok-plain">console</span>.<span class="tok-plain">log</span>(<span class="tok-string">&#x27;Airport_Parking_Status_Fake_Demo: connection stopped&#x27;</span>);
+        } <span class="tok-keyword">catch</span> (<span class="tok-plain">err</span>) {
+            <span class="tok-plain">console</span>.<span class="tok-plain">warn</span>(<span class="tok-string">&#x27;Airport_Parking_Status_Fake_Demo: stop error&#x27;</span>, <span class="tok-plain">err</span>.<span class="tok-plain">message</span>);
+        }
+        <span class="tok-plain">connection</span> = <span class="tok-keyword">null</span>;
+        <span class="tok-plain">signalRConnected</span> = <span class="tok-keyword">false</span>;
+    }
+}
+
+<span class="tok-keyword">export</span> <span class="tok-keyword">function</span> <span class="tok-plain">getAirport_Parking_Status_Fake_DemoDiagnostics</span>() {
+    <span class="tok-keyword">return</span> {
+        <span class="tok-plain">mode</span>: <span class="tok-plain">httpOnlyMode</span> ? <span class="tok-string">&#x27;http-only&#x27;</span> : <span class="tok-string">&#x27;signalr&#x27;</span>,
+        <span class="tok-plain">connected</span>: <span class="tok-plain">signalRConnected</span>,
+        <span class="tok-plain">state</span>: <span class="tok-plain">connection</span> ? <span class="tok-plain">connection</span>.<span class="tok-plain">state</span> : <span class="tok-string">&#x27;none&#x27;</span>,
+        <span class="tok-plain">activeHubUrl</span>,
+        <span class="tok-plain">hubUrls</span>: <span class="tok-plain">getHubUrls</span>(),
+        <span class="tok-plain">httpUrls</span>: <span class="tok-plain">getHttpUrls</span>(),
+        <span class="tok-plain">initialConnectAttempt</span>,
+        <span class="tok-plain">connectLoopActive</span>,
+        <span class="tok-plain">reconnectingCount</span>,
+        <span class="tok-plain">fallbackActive</span>: <span class="tok-plain">fallbackTimer</span> !== <span class="tok-keyword">null</span>,
+        <span class="tok-plain">httpOnlyActive</span>: <span class="tok-plain">httpOnlyTimer</span> !== <span class="tok-keyword">null</span>,
+        <span class="tok-plain">httpOnlyInterval</span>,
+        <span class="tok-plain">stopRequested</span>
+    };
+}</pre>
+      </div>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Success <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>Staff can now confirm and diagnose a signage or lane issue, such as a stuck "closed" message or a miscounted capacity, directly from a browser, tying the live API feed to what drivers physically see overhead instead of relying on a manual inspection of the garage.</p>
+    </div>
+  </details>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="fs">Software applications engineered, developed, and designed by Emilio Wilson</div>
+    </div>
+    <button type="button" class="btn js-contact-btn">Get in touch</button>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

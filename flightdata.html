@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airport Flight Data — Emilio Wilson</title>
+<meta name="description" content="Live arrivals and departures flight data display for Charleston International Airport.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="nav-inner">
+    <div class="wordmark">
+      <div class="avatar-wrap" tabindex="0">
+        <img src="images/emiliowilson.png" alt="Emilio Wilson" class="avatar">
+        <div class="bio-card">
+          <img src="images/emiliowilson.png" alt="Emilio Wilson" class="bio-photo">
+          <div class="bio-name">Emilio Wilson</div>
+          <div class="bio-role">Engineer</div>
+          <p class="bio-text">Emilio Wilson, a native of Charleston, South Carolina, is an Engineer and IT professional with a passion for technology, innovation, and problem solving. He earned his Bachelor of Science in Engineering with a concentration in Innovation Design from Coastal Carolina University in 2023. During college, Emilio gained valuable experience as a football team member and intern with the Charleston International Airport Aviation Authority, where he transitioned into the IT Department. After graduating, he joined the Aviation Authority as an IT Technician and, within five months, was promoted to IT Application Support Analyst. In this role, Emilio develops and supports software applications while applying his engineering and technical expertise to create innovative solutions. He continues to grow in the fields of engineering, technology, and software development while using his skills to solve real world challenges.</p>
+        </div>
+      </div>
+      <span class="name-block">Emilio Wilson <span class="role">| Engineer</span></span>
+    </div>
+    <div class="nav-right">
+      <div class="weather" id="weatherWidget">
+        <span class="weather-icon" id="weatherIcon" aria-hidden="true"></span>
+        <span class="weather-temp" id="weatherTemp"></span>
+      </div>
+      <div class="nav-clock" id="navClock">—</div>
+    </div>
+  </div>
+</header>
+
+<div class="back-link"><a href="index.html">← Back to Project Hub</a></div>
+
+<section class="project-hero">
+  <div class="hero-index">05 &bull; Public facing display</div>
+  <div class="hero-frame">
+    <img src="images/flightdata-board.png" alt="Charleston International Airport arrivals and departures flight board with live weather">
+  </div>
+  <h1>Airport Flight Data</h1>
+  <div class="hero-tools">
+    <span>C#</span><span>Python</span><span>APIs</span><span>SQL Database</span><span>JavaScript</span><span>HTML</span><span>CSS</span>
+  </div>
+</section>
+
+<div class="accordion">
+
+  <details class="acc-item" open>
+    <summary>Project Overview <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>This is the Airport Flight Data display for Charleston International Airport. It shows live arrivals and departures, including the airline, flight number, scheduled time, gate, belt, weather at the destination or origin city, and current status. The board updates automatically as flights move through each stage, from on time to boarding to landed.</p>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Project Goal <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>The goal is to give passengers and staff one accurate, always current view of every flight moving through the airport, so a gate change, a delay, or a weather related disruption is visible immediately instead of relying on an announcement or a manual update.</p>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Tools Used <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>All data comes from an API that is used within C# and Python code. From there the data is stored within a SQL Database. Stored procedures are then created, along with connecting to Azure and Internal Servers to make an API. The APIs are then used within the JavaScript, HTML, and CSS microsite to get the display.</p>
+      <div class="data-flow">
+        <span>API</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>C# + Python</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>SQL Database</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>Stored Procedures</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>Azure + Internal Servers</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>API</span>
+        <span class="df-arrow">&rarr;</span>
+        <span>Microsite (JavaScript, HTML, CSS)</span>
+      </div>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Code Reference <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>This is the code reference for the weather data.</p>
+      <div class="code-ref-image">
+        <img src="images/flightdata-sql.png" alt="SQL Server Management Studio query returning weather forecast data used by the flight board">
+      </div>
+      <div class="code-ref">
+        <div class="cr-file"><span>Weather.py</span><a href="code/Weather.py" download>Download full file</a></div>
+        <pre class="code-full"><span class="tok-string">&quot;&quot;&quot;
+Weather Fetcher - Main Entry Point
+Fetches weather FORECAST data from multiple providers and stores in SQL Server.
+
+Providers:
+- NWS (National Weather Service) - US cities
+- Aviation Weather - International airports
+
+Usage:
+    python weather_fetcher.py [options]
+    
+Options:
+    --us-only        Only fetch US cities (NWS)
+    --intl-only      Only fetch international airports (Aviation)
+&quot;&quot;&quot;</span>
+
+<span class="tok-keyword">from</span> <span class="tok-plain">__future__</span> <span class="tok-keyword">import</span> <span class="tok-plain">print_function</span>
+<span class="tok-keyword">import</span> <span class="tok-plain">sys</span>
+<span class="tok-keyword">import</span> <span class="tok-plain">traceback</span>
+
+<span class="tok-comment"># =============================================================================</span>
+<span class="tok-comment"># TOP-LEVEL ERROR HANDLER</span>
+<span class="tok-comment"># Catches import errors and other early failures that would otherwise be silent</span>
+<span class="tok-comment"># =============================================================================</span>
+<span class="tok-keyword">def</span> <span class="tok-plain">fatal_error</span>(<span class="tok-plain">message</span>, <span class="tok-plain">exception</span>=<span class="tok-keyword">None</span>):
+    <span class="tok-string">&quot;&quot;&quot;Print error and exit with non-zero code.&quot;&quot;&quot;</span>
+    <span class="tok-plain">print</span>(<span class="tok-string">&quot;=&quot;</span> * 60, <span class="tok-plain">file</span>=<span class="tok-plain">sys</span>.<span class="tok-plain">stderr</span>)
+    <span class="tok-plain">print</span>(<span class="tok-string">&quot;FATAL ERROR - WEATHER FETCHER FAILED TO START&quot;</span>, <span class="tok-plain">file</span>=<span class="tok-plain">sys</span>.<span class="tok-plain">stderr</span>)
+    <span class="tok-plain">print</span>(<span class="tok-string">&quot;=&quot;</span> * 60, <span class="tok-plain">file</span>=<span class="tok-plain">sys</span>.<span class="tok-plain">stderr</span>)
+    <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Error: {message}&quot;</span>, <span class="tok-plain">file</span>=<span class="tok-plain">sys</span>.<span class="tok-plain">stderr</span>)
+    <span class="tok-keyword">if</span> <span class="tok-plain">exception</span>:
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Exception: {exception}&quot;</span>, <span class="tok-plain">file</span>=<span class="tok-plain">sys</span>.<span class="tok-plain">stderr</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">&quot;\nTraceback:&quot;</span>, <span class="tok-plain">file</span>=<span class="tok-plain">sys</span>.<span class="tok-plain">stderr</span>)
+        <span class="tok-plain">traceback</span>.<span class="tok-plain">print_exc</span>(<span class="tok-plain">file</span>=<span class="tok-plain">sys</span>.<span class="tok-plain">stderr</span>)
+    <span class="tok-plain">print</span>(<span class="tok-string">&quot;=&quot;</span> * 60, <span class="tok-plain">file</span>=<span class="tok-plain">sys</span>.<span class="tok-plain">stderr</span>)
+    <span class="tok-plain">sys</span>.<span class="tok-plain">exit</span>(1)
+
+
+<span class="tok-comment"># Wrap all imports in try/except to catch missing modules</span>
+<span class="tok-keyword">try</span>:
+    <span class="tok-keyword">import</span> <span class="tok-plain">argparse</span>
+    <span class="tok-keyword">from</span> <span class="tok-plain">datetime</span> <span class="tok-keyword">import</span> <span class="tok-plain">datetime</span>
+<span class="tok-keyword">except</span> <span class="tok-plain">ImportError</span> <span class="tok-keyword">as</span> <span class="tok-plain">e</span>:
+    <span class="tok-plain">fatal_error</span>(<span class="tok-string">&quot;Failed to import standard library&quot;</span>, <span class="tok-plain">e</span>)
+
+<span class="tok-keyword">try</span>:
+    <span class="tok-keyword">from</span> <span class="tok-plain">config</span> <span class="tok-keyword">import</span> <span class="tok-plain">US_CITIES</span>, <span class="tok-plain">INTERNATIONAL_AIRPORTS</span>, <span class="tok-plain">MAX_WORKERS</span>
+<span class="tok-keyword">except</span> <span class="tok-plain">ImportError</span> <span class="tok-keyword">as</span> <span class="tok-plain">e</span>:
+    <span class="tok-plain">fatal_error</span>(<span class="tok-string">&quot;Failed to import config module&quot;</span>, <span class="tok-plain">e</span>)
+
+<span class="tok-keyword">try</span>:
+    <span class="tok-keyword">from</span> <span class="tok-plain">providers</span> <span class="tok-keyword">import</span> <span class="tok-plain">NWSProvider</span>, <span class="tok-plain">InternationalProvider</span>, <span class="tok-plain">WeatherObservation</span>
+<span class="tok-keyword">except</span> <span class="tok-plain">ImportError</span> <span class="tok-keyword">as</span> <span class="tok-plain">e</span>:
+    <span class="tok-plain">fatal_error</span>(<span class="tok-string">&quot;Failed to import providers module&quot;</span>, <span class="tok-plain">e</span>)
+
+<span class="tok-keyword">try</span>:
+    <span class="tok-keyword">from</span> <span class="tok-plain">database</span> <span class="tok-keyword">import</span> (
+        <span class="tok-plain">get_connection</span>, 
+        <span class="tok-plain">ensure_schema</span>, 
+        <span class="tok-plain">upsert_observations</span>,
+        <span class="tok-plain">UpsertResult</span>
+    )
+<span class="tok-keyword">except</span> <span class="tok-plain">ImportError</span> <span class="tok-keyword">as</span> <span class="tok-plain">e</span>:
+    <span class="tok-plain">fatal_error</span>(<span class="tok-string">&quot;Failed to import database module&quot;</span>, <span class="tok-plain">e</span>)
+
+<span class="tok-keyword">try</span>:
+    <span class="tok-keyword">from</span> <span class="tok-plain">logger_service</span> <span class="tok-keyword">import</span> <span class="tok-plain">get_logger</span>
+<span class="tok-keyword">except</span> <span class="tok-plain">ImportError</span> <span class="tok-keyword">as</span> <span class="tok-plain">e</span>:
+    <span class="tok-plain">fatal_error</span>(<span class="tok-string">&quot;Failed to import logger_service module&quot;</span>, <span class="tok-plain">e</span>)
+
+
+<span class="tok-comment"># Failure thresholds</span>
+<span class="tok-plain">PROVIDER_FAILURE_THRESHOLD</span> = 0.5  <span class="tok-comment"># Alert if more than 50% of locations fail completely</span>
+<span class="tok-plain">MIN_FORECAST_HOURS</span> = 12  <span class="tok-comment"># Expect at least 12 hours of forecasts</span>
+
+
+<span class="tok-keyword">def</span> <span class="tok-plain">parse_args</span>():
+    <span class="tok-string">&quot;&quot;&quot;Parse command line arguments.&quot;&quot;&quot;</span>
+    <span class="tok-plain">parser</span> = <span class="tok-plain">argparse</span>.<span class="tok-plain">ArgumentParser</span>(
+        <span class="tok-plain">description</span>=<span class="tok-string">&quot;Fetch weather forecast data from multiple providers and store in SQL Server&quot;</span>
+    )
+    <span class="tok-plain">parser</span>.<span class="tok-plain">add_argument</span>(
+        <span class="tok-string">&quot;--us-only&quot;</span>,
+        <span class="tok-plain">action</span>=<span class="tok-string">&quot;store_true&quot;</span>,
+        <span class="tok-plain">help</span>=<span class="tok-string">&quot;Only fetch US cities (NWS provider)&quot;</span>
+    )
+    <span class="tok-plain">parser</span>.<span class="tok-plain">add_argument</span>(
+        <span class="tok-string">&quot;--intl-only&quot;</span>,
+        <span class="tok-plain">action</span>=<span class="tok-string">&quot;store_true&quot;</span>,
+        <span class="tok-plain">help</span>=<span class="tok-string">&quot;Only fetch international airports (Aviation provider)&quot;</span>
+    )
+    <span class="tok-keyword">return</span> <span class="tok-plain">parser</span>.<span class="tok-plain">parse_args</span>()
+
+
+<span class="tok-keyword">def</span> <span class="tok-plain">print_progress</span>(<span class="tok-plain">location_name</span>: <span class="tok-plain">str</span>, <span class="tok-plain">result</span>) -&gt; <span class="tok-keyword">None</span>:
+    <span class="tok-string">&quot;&quot;&quot;Callback to print progress during fetch.&quot;&quot;&quot;</span>
+    <span class="tok-keyword">if</span> <span class="tok-plain">result</span>.<span class="tok-plain">error</span>:
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;  [X] {location_name}: {result.error[:60]}&quot;</span>)
+    <span class="tok-keyword">else</span>:
+        <span class="tok-plain">forecasts</span> = <span class="tok-plain">len</span>(<span class="tok-plain">result</span>.<span class="tok-plain">forecasts</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;  [OK] {location_name}: {forecasts} forecast hours&quot;</span>)
+
+
+<span class="tok-keyword">def</span> <span class="tok-plain">analyze_results</span>(<span class="tok-plain">results</span>: <span class="tok-plain">list</span>) -&gt; <span class="tok-plain">dict</span>:
+    <span class="tok-string">&quot;&quot;&quot;
+    Analyze fetch results for issues.
+    
+    Returns dict with:
+        - complete_failures: list of {location, error}
+        - low_forecasts: list of {location, count, expected}
+        - success_count: fully successful locations
+    &quot;&quot;&quot;</span>
+    <span class="tok-plain">analysis</span> = {
+        <span class="tok-string">&quot;complete_failures&quot;</span>: [],
+        <span class="tok-string">&quot;low_forecasts&quot;</span>: [],
+        <span class="tok-string">&quot;success_count&quot;</span>: 0,
+    }
+    
+    <span class="tok-keyword">for</span> <span class="tok-plain">result</span> <span class="tok-keyword">in</span> <span class="tok-plain">results</span>:
+        <span class="tok-comment"># Complete failure</span>
+        <span class="tok-keyword">if</span> <span class="tok-plain">result</span>.<span class="tok-plain">error</span>:
+            <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;complete_failures&quot;</span>].<span class="tok-plain">append</span>({
+                <span class="tok-string">&quot;location&quot;</span>: <span class="tok-plain">result</span>.<span class="tok-plain">location_name</span>,
+                <span class="tok-string">&quot;error&quot;</span>: <span class="tok-plain">result</span>.<span class="tok-plain">error</span>
+            })
+            <span class="tok-keyword">continue</span>
+        
+        <span class="tok-plain">has_issues</span> = <span class="tok-keyword">False</span>
+        
+        <span class="tok-comment"># Check for low forecast count</span>
+        <span class="tok-plain">forecast_count</span> = <span class="tok-plain">len</span>(<span class="tok-plain">result</span>.<span class="tok-plain">forecasts</span>)
+        <span class="tok-keyword">if</span> <span class="tok-plain">forecast_count</span> &lt; <span class="tok-plain">MIN_FORECAST_HOURS</span>:
+            <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;low_forecasts&quot;</span>].<span class="tok-plain">append</span>({
+                <span class="tok-string">&quot;location&quot;</span>: <span class="tok-plain">result</span>.<span class="tok-plain">location_name</span>,
+                <span class="tok-string">&quot;count&quot;</span>: <span class="tok-plain">forecast_count</span>,
+                <span class="tok-string">&quot;expected&quot;</span>: <span class="tok-plain">MIN_FORECAST_HOURS</span>
+            })
+            <span class="tok-plain">has_issues</span> = <span class="tok-keyword">True</span>
+        
+        <span class="tok-keyword">if</span> <span class="tok-keyword">not</span> <span class="tok-plain">has_issues</span>:
+            <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;success_count&quot;</span>] += 1
+    
+    <span class="tok-keyword">return</span> <span class="tok-plain">analysis</span>
+
+
+<span class="tok-keyword">def</span> <span class="tok-plain">build_issues_dict</span>(<span class="tok-plain">provider_name</span>: <span class="tok-plain">str</span>, <span class="tok-plain">analysis</span>: <span class="tok-plain">dict</span>) -&gt; <span class="tok-plain">dict</span>:
+    <span class="tok-string">&quot;&quot;&quot;Build structured issues dict for email template.&quot;&quot;&quot;</span>
+    <span class="tok-plain">issues</span> = []
+    
+    <span class="tok-keyword">if</span> <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;complete_failures&quot;</span>]:
+        <span class="tok-plain">issues</span>.<span class="tok-plain">append</span>({
+            <span class="tok-string">&quot;type&quot;</span>: <span class="tok-string">&quot;Complete Failures&quot;</span>,
+            <span class="tok-string">&quot;count&quot;</span>: <span class="tok-plain">len</span>(<span class="tok-plain">analysis</span>[<span class="tok-string">&quot;complete_failures&quot;</span>]),
+            <span class="tok-string">&quot;locations&quot;</span>: [<span class="tok-plain">f</span>[<span class="tok-string">&quot;location&quot;</span>] <span class="tok-keyword">for</span> <span class="tok-plain">f</span> <span class="tok-keyword">in</span> <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;complete_failures&quot;</span>]]
+        })
+    
+    <span class="tok-keyword">if</span> <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;low_forecasts&quot;</span>]:
+        <span class="tok-plain">issues</span>.<span class="tok-plain">append</span>({
+            <span class="tok-string">&quot;type&quot;</span>: <span class="tok-string">f&quot;Low Forecast Count (&lt;{MIN_FORECAST_HOURS}hrs)&quot;</span>,
+            <span class="tok-string">&quot;count&quot;</span>: <span class="tok-plain">len</span>(<span class="tok-plain">analysis</span>[<span class="tok-string">&quot;low_forecasts&quot;</span>]),
+            <span class="tok-string">&quot;locations&quot;</span>: [<span class="tok-string">f&quot;{f[&#x27;location&#x27;]} ({f[&#x27;count&#x27;]}hrs)&quot;</span> <span class="tok-keyword">for</span> <span class="tok-plain">f</span> <span class="tok-keyword">in</span> <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;low_forecasts&quot;</span>]]
+        })
+    
+    <span class="tok-keyword">return</span> {<span class="tok-plain">provider_name</span>: <span class="tok-plain">issues</span>} <span class="tok-keyword">if</span> <span class="tok-plain">issues</span> <span class="tok-keyword">else</span> {}
+
+
+<span class="tok-keyword">def</span> <span class="tok-plain">run</span>(<span class="tok-plain">include_us</span>: <span class="tok-plain">bool</span> = <span class="tok-keyword">True</span>, <span class="tok-plain">include_intl</span>: <span class="tok-plain">bool</span> = <span class="tok-keyword">True</span>) -&gt; <span class="tok-keyword">None</span>:
+    <span class="tok-string">&quot;&quot;&quot;
+    Main execution function.
+    
+    Args:
+        include_us: Include US cities (NWS provider)
+        include_intl: Include international airports (Aviation provider)
+    &quot;&quot;&quot;</span>
+    <span class="tok-plain">logger</span> = <span class="tok-plain">get_logger</span>()
+    <span class="tok-plain">logger</span>.<span class="tok-plain">log_execution_context</span>()
+    
+    <span class="tok-plain">start_time</span> = <span class="tok-plain">datetime</span>.<span class="tok-plain">now</span>()
+    
+    <span class="tok-comment"># Determine which providers to use</span>
+    <span class="tok-plain">providers</span> = []
+    <span class="tok-keyword">if</span> <span class="tok-plain">include_us</span>:
+        <span class="tok-plain">providers</span>.<span class="tok-plain">append</span>(<span class="tok-plain">NWSProvider</span>())
+    <span class="tok-keyword">if</span> <span class="tok-plain">include_intl</span>:
+        <span class="tok-plain">providers</span>.<span class="tok-plain">append</span>(<span class="tok-plain">InternationalProvider</span>())
+    
+    <span class="tok-plain">total_locations</span> = <span class="tok-plain">sum</span>(<span class="tok-plain">len</span>(<span class="tok-plain">p</span>.<span class="tok-plain">locations</span>) <span class="tok-keyword">for</span> <span class="tok-plain">p</span> <span class="tok-keyword">in</span> <span class="tok-plain">providers</span>)
+    
+    <span class="tok-plain">print</span>(<span class="tok-string">&quot;=&quot;</span> * 60)
+    <span class="tok-plain">print</span>(<span class="tok-string">&quot;WEATHER FETCHER (Current + Forecasts)&quot;</span>)
+    <span class="tok-plain">print</span>(<span class="tok-string">&quot;=&quot;</span> * 60)
+    <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Started:     {start_time.strftime(&#x27;%Y-%m-%d %H:%M:%S&#x27;)}&quot;</span>)
+    <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Providers:   {&#x27;, &#x27;.join(p.name for p in providers)}&quot;</span>)
+    <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Locations:   {total_locations}&quot;</span>)
+    <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Workers:     {MAX_WORKERS}&quot;</span>)
+    <span class="tok-plain">print</span>(<span class="tok-string">&quot;=&quot;</span> * 60)
+    
+    <span class="tok-plain">conn</span> = <span class="tok-keyword">None</span>
+    <span class="tok-plain">all_observations</span> = []
+    <span class="tok-plain">all_issues</span> = {}  <span class="tok-comment"># Collect issues across all providers</span>
+    
+    <span class="tok-keyword">try</span>:
+        <span class="tok-comment"># Phase 1: Fetch from all providers (forecasts only)</span>
+        <span class="tok-plain">print</span>(<span class="tok-string">&quot;\n[Phase 1] Fetching weather forecasts...&quot;</span>)
+        <span class="tok-plain">fetch_start</span> = <span class="tok-plain">datetime</span>.<span class="tok-plain">now</span>()
+        
+        <span class="tok-plain">total_success</span> = 0
+        <span class="tok-plain">total_locations</span> = 0
+        
+        <span class="tok-keyword">for</span> <span class="tok-plain">provider</span> <span class="tok-keyword">in</span> <span class="tok-plain">providers</span>:
+            <span class="tok-plain">print</span>(<span class="tok-string">f&quot;\n  [{provider.name}] Fetching {len(provider.locations)} locations...&quot;</span>)
+            
+            <span class="tok-plain">results</span> = <span class="tok-plain">provider</span>.<span class="tok-plain">fetch_all</span>(
+                <span class="tok-plain">include_current</span>=<span class="tok-keyword">True</span>,   <span class="tok-comment"># Stage 4: pulled for usp_GetWeather to serve</span>
+                <span class="tok-plain">include_forecast</span>=<span class="tok-keyword">True</span>,
+                <span class="tok-plain">progress_callback</span>=<span class="tok-plain">print_progress</span>
+            )
+            
+            <span class="tok-comment"># Collect observations (forecasts only)</span>
+            <span class="tok-plain">observations</span> = <span class="tok-plain">provider</span>.<span class="tok-plain">get_all_observations</span>(<span class="tok-plain">results</span>)
+            <span class="tok-plain">all_observations</span>.<span class="tok-plain">extend</span>(<span class="tok-plain">observations</span>)
+            
+            <span class="tok-comment"># Analyze results for issues</span>
+            <span class="tok-plain">analysis</span> = <span class="tok-plain">analyze_results</span>(<span class="tok-plain">results</span>)
+            
+            <span class="tok-plain">success</span> = <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;success_count&quot;</span>]
+            <span class="tok-plain">total_success</span> += <span class="tok-plain">success</span>
+            <span class="tok-plain">total_locations</span> += <span class="tok-plain">len</span>(<span class="tok-plain">provider</span>.<span class="tok-plain">locations</span>)
+            
+            <span class="tok-plain">print</span>(<span class="tok-string">f&quot;  [{provider.name}] Complete: {success}/{len(provider.locations)} fully successful&quot;</span>)
+            
+            <span class="tok-comment"># Report issues to console</span>
+            <span class="tok-keyword">if</span> <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;complete_failures&quot;</span>]:
+                <span class="tok-plain">print</span>(<span class="tok-string">f&quot;  [{provider.name}] [!] {len(analysis[&#x27;complete_failures&#x27;])} complete failures&quot;</span>)
+            <span class="tok-keyword">if</span> <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;low_forecasts&quot;</span>]:
+                <span class="tok-plain">print</span>(<span class="tok-string">f&quot;  [{provider.name}] [!] {len(analysis[&#x27;low_forecasts&#x27;])} with low forecast counts&quot;</span>)
+            
+            <span class="tok-comment"># Build issues for this provider</span>
+            <span class="tok-plain">provider_issues</span> = <span class="tok-plain">build_issues_dict</span>(<span class="tok-plain">provider</span>.<span class="tok-plain">name</span>, <span class="tok-plain">analysis</span>)
+            <span class="tok-plain">all_issues</span>.<span class="tok-plain">update</span>(<span class="tok-plain">provider_issues</span>)
+            
+            <span class="tok-comment"># Check for critical failure rate</span>
+            <span class="tok-plain">failure_rate</span> = <span class="tok-plain">len</span>(<span class="tok-plain">analysis</span>[<span class="tok-string">&quot;complete_failures&quot;</span>]) / <span class="tok-plain">len</span>(<span class="tok-plain">provider</span>.<span class="tok-plain">locations</span>) <span class="tok-keyword">if</span> <span class="tok-plain">len</span>(<span class="tok-plain">provider</span>.<span class="tok-plain">locations</span>) &gt; 0 <span class="tok-keyword">else</span> 0
+            
+            <span class="tok-keyword">if</span> <span class="tok-plain">failure_rate</span> &gt; <span class="tok-plain">PROVIDER_FAILURE_THRESHOLD</span>:
+                <span class="tok-comment"># Critical - more than half failed completely</span>
+                <span class="tok-plain">summary</span> = {
+                    <span class="tok-string">&quot;Provider&quot;</span>: <span class="tok-plain">provider</span>.<span class="tok-plain">name</span>,
+                    <span class="tok-string">&quot;Success Rate&quot;</span>: <span class="tok-string">f&quot;{(1-failure_rate):.0%}&quot;</span>,
+                    <span class="tok-string">&quot;Successful&quot;</span>: <span class="tok-plain">analysis</span>[<span class="tok-string">&quot;success_count&quot;</span>],
+                    <span class="tok-string">&quot;Failed&quot;</span>: <span class="tok-plain">len</span>(<span class="tok-plain">analysis</span>[<span class="tok-string">&quot;complete_failures&quot;</span>]),
+                    <span class="tok-string">&quot;Total Locations&quot;</span>: <span class="tok-plain">len</span>(<span class="tok-plain">provider</span>.<span class="tok-plain">locations</span>),
+                }
+                
+                <span class="tok-plain">error</span> = <span class="tok-plain">Exception</span>(
+                    <span class="tok-string">f&quot;Provider &#x27;{provider.name}&#x27; critical failure: &quot;</span>
+                    <span class="tok-string">f&quot;{len(analysis[&#x27;complete_failures&#x27;])}/{len(provider.locations)} locations failed ({failure_rate:.0%})&quot;</span>
+                )
+                <span class="tok-plain">logger</span>.<span class="tok-plain">log_error</span>(
+                    <span class="tok-plain">error</span>, 
+                    <span class="tok-string">&quot;weather_fetcher&quot;</span>, 
+                    <span class="tok-string">f&quot;fetch_{provider.name}&quot;</span>,
+                    <span class="tok-plain">summary</span>=<span class="tok-plain">summary</span>,
+                    <span class="tok-plain">issues</span>=<span class="tok-plain">provider_issues</span>,
+                    <span class="tok-plain">is_warning</span>=<span class="tok-keyword">False</span>
+                )
+        
+        <span class="tok-plain">fetch_time</span> = (<span class="tok-plain">datetime</span>.<span class="tok-plain">now</span>() - <span class="tok-plain">fetch_start</span>).<span class="tok-plain">total_seconds</span>()
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;\n[TIME] Fetch completed in {fetch_time:.1f}s ({total_success}/{total_locations} fully successful)&quot;</span>)
+        
+        <span class="tok-comment"># Phase 2: Summarize observations</span>
+        <span class="tok-plain">print</span>(<span class="tok-string">&quot;\n[Phase 2] Preparing CHS-API request...&quot;</span>)
+        
+        <span class="tok-plain">forecast_count</span> = <span class="tok-plain">len</span>(<span class="tok-plain">all_observations</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;   Forecast records: {forecast_count}&quot;</span>)
+        
+        <span class="tok-comment"># Check for zero records - this is a critical failure</span>
+        <span class="tok-keyword">if</span> <span class="tok-plain">forecast_count</span> == 0:
+            <span class="tok-plain">error</span> = <span class="tok-plain">Exception</span>(<span class="tok-string">&quot;No weather forecasts collected from any provider!&quot;</span>)
+            <span class="tok-plain">logger</span>.<span class="tok-plain">log_error</span>(<span class="tok-plain">error</span>, <span class="tok-string">&quot;weather_fetcher&quot;</span>, <span class="tok-string">&quot;run&quot;</span>)
+            <span class="tok-keyword">raise</span> <span class="tok-plain">error</span>
+        
+        <span class="tok-comment"># Phase 3: Database operations</span>
+        <span class="tok-plain">print</span>(<span class="tok-string">&quot;\n[Phase 3] Posting to CHS-API...&quot;</span>)
+        <span class="tok-plain">insert_start</span> = <span class="tok-plain">datetime</span>.<span class="tok-plain">now</span>()
+        
+        <span class="tok-plain">conn</span> = <span class="tok-plain">get_connection</span>()
+        <span class="tok-plain">ensure_schema</span>(<span class="tok-plain">conn</span>)
+        
+        <span class="tok-plain">result</span> = <span class="tok-plain">upsert_observations</span>(<span class="tok-plain">conn</span>, <span class="tok-plain">all_observations</span>)
+        <span class="tok-plain">insert_time</span> = (<span class="tok-plain">datetime</span>.<span class="tok-plain">now</span>() - <span class="tok-plain">insert_start</span>).<span class="tok-plain">total_seconds</span>()
+        
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;   Deleted:  {result.deleted} old records&quot;</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;   Inserted: {result.inserted} new records&quot;</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;   Updated:  {result.updated} existing records&quot;</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;   Time:     {insert_time:.2f}s&quot;</span>)
+        
+        <span class="tok-comment"># Verify upsert worked</span>
+        <span class="tok-keyword">if</span> <span class="tok-plain">result</span>.<span class="tok-plain">total_processed</span> == 0 <span class="tok-keyword">and</span> <span class="tok-plain">forecast_count</span> &gt; 0:
+            <span class="tok-plain">error</span> = <span class="tok-plain">Exception</span>(<span class="tok-string">f&quot;Database upsert failed: 0 records processed from {forecast_count} observations&quot;</span>)
+            <span class="tok-plain">logger</span>.<span class="tok-plain">log_error</span>(<span class="tok-plain">error</span>, <span class="tok-string">&quot;weather_fetcher&quot;</span>, <span class="tok-string">&quot;run&quot;</span>)
+            <span class="tok-keyword">raise</span> <span class="tok-plain">error</span>
+        
+        <span class="tok-comment"># Summary</span>
+        <span class="tok-plain">total_time</span> = (<span class="tok-plain">datetime</span>.<span class="tok-plain">now</span>() - <span class="tok-plain">start_time</span>).<span class="tok-plain">total_seconds</span>()
+        <span class="tok-plain">print</span>(<span class="tok-string">&quot;\n&quot;</span> + <span class="tok-string">&quot;=&quot;</span> * 60)
+        <span class="tok-plain">print</span>(<span class="tok-string">&quot;COMPLETE&quot;</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">&quot;=&quot;</span> * 60)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Locations processed: {total_success}/{total_locations} fully successful&quot;</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Records inserted:    {result.inserted}&quot;</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Records updated:     {result.updated}&quot;</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Records deleted:     {result.deleted}&quot;</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Total time:          {total_time:.1f}s&quot;</span>)
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;Finished:            {datetime.now().strftime(&#x27;%Y-%m-%d %H:%M:%S&#x27;)}&quot;</span>)
+        
+        <span class="tok-comment"># Send warning email if there were partial issues (but not critical)</span>
+        <span class="tok-keyword">if</span> <span class="tok-plain">all_issues</span>:
+            <span class="tok-plain">summary</span> = {
+                <span class="tok-string">&quot;Status&quot;</span>: <span class="tok-string">&quot;Completed with issues&quot;</span>,
+                <span class="tok-string">&quot;Records Processed&quot;</span>: <span class="tok-plain">result</span>.<span class="tok-plain">total_processed</span>,
+                <span class="tok-string">&quot;Fully Successful&quot;</span>: <span class="tok-string">f&quot;{total_success}/{total_locations}&quot;</span>,
+                <span class="tok-string">&quot;Total Time&quot;</span>: <span class="tok-string">f&quot;{total_time:.1f}s&quot;</span>,
+            }
+            
+            <span class="tok-plain">warning</span> = <span class="tok-plain">Exception</span>(<span class="tok-string">&quot;Weather fetch completed with partial data issues&quot;</span>)
+            <span class="tok-plain">logger</span>.<span class="tok-plain">log_error</span>(
+                <span class="tok-plain">warning</span>,
+                <span class="tok-string">&quot;weather_fetcher&quot;</span>,
+                <span class="tok-string">&quot;partial_data_warning&quot;</span>,
+                <span class="tok-plain">summary</span>=<span class="tok-plain">summary</span>,
+                <span class="tok-plain">issues</span>=<span class="tok-plain">all_issues</span>,
+                <span class="tok-plain">is_warning</span>=<span class="tok-keyword">True</span>
+            )
+        
+        <span class="tok-plain">logger</span>.<span class="tok-plain">log_success</span>(<span class="tok-string">f&quot;Weather fetch complete: {result.total_processed} records processed ({result.inserted} new, {result.updated} updated)&quot;</span>)
+        
+    <span class="tok-keyword">except</span> <span class="tok-plain">Exception</span> <span class="tok-keyword">as</span> <span class="tok-plain">e</span>:
+        <span class="tok-plain">print</span>(<span class="tok-string">f&quot;\n[FATAL] {e}&quot;</span>)
+        <span class="tok-plain">logger</span>.<span class="tok-plain">log_error</span>(<span class="tok-plain">e</span>, <span class="tok-string">&quot;weather_fetcher&quot;</span>, <span class="tok-string">&quot;run&quot;</span>)
+        <span class="tok-keyword">raise</span>
+        
+    <span class="tok-keyword">finally</span>:
+        <span class="tok-keyword">if</span> <span class="tok-plain">conn</span>:
+            <span class="tok-plain">conn</span>.<span class="tok-plain">close</span>()
+
+
+<span class="tok-keyword">def</span> <span class="tok-plain">main</span>():
+    <span class="tok-string">&quot;&quot;&quot;Entry point with argument parsing.&quot;&quot;&quot;</span>
+    <span class="tok-plain">args</span> = <span class="tok-plain">parse_args</span>()
+    
+    <span class="tok-keyword">if</span> <span class="tok-plain">args</span>.<span class="tok-plain">us_only</span> <span class="tok-keyword">and</span> <span class="tok-plain">args</span>.<span class="tok-plain">intl_only</span>:
+        <span class="tok-plain">print</span>(<span class="tok-string">&quot;Error: Cannot specify both --us-only and --intl-only&quot;</span>)
+        <span class="tok-keyword">return</span> 1
+    
+    <span class="tok-plain">include_us</span> = <span class="tok-keyword">not</span> <span class="tok-plain">args</span>.<span class="tok-plain">intl_only</span>
+    <span class="tok-plain">include_intl</span> = <span class="tok-keyword">not</span> <span class="tok-plain">args</span>.<span class="tok-plain">us_only</span>
+    
+    <span class="tok-keyword">try</span>:
+        <span class="tok-plain">run</span>(
+            <span class="tok-plain">include_us</span>=<span class="tok-plain">include_us</span>,
+            <span class="tok-plain">include_intl</span>=<span class="tok-plain">include_intl</span>
+        )
+        <span class="tok-keyword">return</span> 0
+    <span class="tok-keyword">except</span> <span class="tok-plain">Exception</span>:
+        <span class="tok-keyword">return</span> 1
+
+
+<span class="tok-keyword">if</span> <span class="tok-plain">__name__</span> == <span class="tok-string">&quot;__main__&quot;</span>:
+    <span class="tok-keyword">try</span>:
+        <span class="tok-plain">sys</span>.<span class="tok-plain">exit</span>(<span class="tok-plain">main</span>())
+    <span class="tok-keyword">except</span> <span class="tok-plain">Exception</span> <span class="tok-keyword">as</span> <span class="tok-plain">e</span>:
+        <span class="tok-plain">fatal_error</span>(<span class="tok-string">&quot;Uncaught exception in main&quot;</span>, <span class="tok-plain">e</span>)</pre>
+      </div>
+    </div>
+  </details>
+
+  <details class="acc-item">
+    <summary>Success <span class="acc-arrow">⌄</span></summary>
+    <div class="acc-body">
+      <p>Passengers and staff now see one live, accurate flight board that reflects gate changes, delays, and weather conditions the moment they happen, replacing a static or manually updated sign with a feed that stays current on its own.</p>
+    </div>
+  </details>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="fs">Software applications engineered, developed, and designed by Emilio Wilson</div>
+    </div>
+    <button type="button" class="btn js-contact-btn">Get in touch</button>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
